@@ -1,4 +1,4 @@
-package com.hotel.interfaces;
+package com.hotel.java;
 
 public interface Manageable<T> {
 
