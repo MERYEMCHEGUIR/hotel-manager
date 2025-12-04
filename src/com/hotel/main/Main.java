@@ -28,6 +28,7 @@ public class Main {
             hotelService.loadFakeData();
         }
 
+        //
         // Menu principal
         boolean running = true;
         while (running) {
