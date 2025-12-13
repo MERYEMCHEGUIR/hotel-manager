@@ -1,24 +1,10 @@
 package com.hotel.java;
 
+import java.util.List;
+
 public interface Manageable<T> {
-
-    /**
-     * Ajouter un élément
-     */
     void add(T item);
-
-    /**
-     * Mettre à jour un élément
-     */
-    void update(T item);
-
-    /**
-     * Supprimer un élément
-     */
-    void delete(String id);
-
-    /**
-     * Afficher tous les éléments
-     */
-    void displayAll();
+    void remove(String id);
+    T findById(String id);
+    List<T> getAll();
 }
