@@ -3,29 +3,61 @@ package com.hotel.utils;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
+import java.time.temporal.ChronoUnit;
 
-/**
- * Utilitaire pour gérer le formatage et le parsing des dates.
- */
 public class DateUtils {
-    private static final DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ofPattern("dd/MM/yyyy");
+
+    private static final DateTimeFormatter FORMATTER =
+            DateTimeFormatter.ofPattern("dd/MM/yyyy");
 
     /**
-     * Convertit une chaîne de caractères (JJ/MM/AAAA) en objet LocalDate.
-     * @param dateString La date au format texte.
-     * @return L'objet LocalDate correspondant.
-     * @throws DateTimeParseException Si le format n'est pas valide.
+     * Parse date depuis string
      */
-    public static LocalDate parseDate(String dateString) throws DateTimeParseException {
-        return LocalDate.parse(dateString, DATE_FORMATTER);
+    public static LocalDate parseDate(String dateStr) {
+        try {
+            return LocalDate.parse(dateStr, FORMATTER);
+        } catch (DateTimeParseException e) {
+            return null;
+        }
     }
 
     /**
-     * Convertit un objet LocalDate en chaîne de caractères (JJ/MM/AAAA).
-     * @param date L'objet LocalDate.
-     * @return La chaîne de caractères formatée.
+     * Formater date en string
      */
     public static String formatDate(LocalDate date) {
-        return date.format(DATE_FORMATTER);
+        if (date == null) return "";
+        return date.format(FORMATTER);
+    }
+
+    /**
+     * Calculer nombre de jours entre deux dates
+     */
+    public static long daysBetween(LocalDate start, LocalDate end) {
+        if (start == null || end == null) return 0;
+        return ChronoUnit.DAYS.between(start, end);
+    }
+
+    /**
+     * Vérifier si date1 est avant date2
+     */
+    public static boolean isBefore(LocalDate date1, LocalDate date2) {
+        if (date1 == null || date2 == null) return false;
+        return date1.isBefore(date2);
+    }
+
+    /**
+     * Vérifier si date est dans le futur
+     */
+    public static boolean isFuture(LocalDate date) {
+        if (date == null) return false;
+        return date.isAfter(LocalDate.now());
+    }
+
+    /**
+     * Vérifier si date est dans le passé
+     */
+    public static boolean isPast(LocalDate date) {
+        if (date == null) return false;
+        return date.isBefore(LocalDate.now());
     }
 }
