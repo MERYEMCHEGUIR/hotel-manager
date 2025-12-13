@@ -1,37 +1,39 @@
 package com.hotel.model;
 
+/**
+ * Représente une chambre de l'hôtel.
+ */
 public class Room {
-    private String roomNumber;
-    private String type;
-    private double price;
-    private boolean available;
+    public enum RoomType {
+        SINGLE, DOUBLE, SUITE, DELUXE
+    }
 
-    public Room(String roomNumber, String type, double price) {
+    private int roomNumber;
+    private RoomType roomType;
+    private double pricePerNight;
+    private boolean isAvailable;
+
+    public Room(int roomNumber, RoomType roomType, double pricePerNight) {
         this.roomNumber = roomNumber;
-        this.type = type;
-        this.price = price;
-        this.available = true;
+        this.roomType = roomType;
+        this.pricePerNight = pricePerNight;
+        this.isAvailable = true;
     }
 
-    public String getRoomNumber() {
-        return roomNumber;
-    }
+    // Getters
+    public int getRoomNumber() { return roomNumber; }
+    public RoomType getRoomType() { return roomType; }
+    public double getPricePerNight() { return pricePerNight; }
+    public boolean isAvailable() { return isAvailable; }
 
-    public boolean isAvailable() {
-        return available;
-    }
-
-    public void setAvailable(boolean available) {
-        this.available = available;
-    }
+    // Méthodes d'état (CRUCIALES pour HotelService)
+    public void book() { this.isAvailable = false; }
+    public void unbook() { this.isAvailable = true; }
 
     @Override
     public String toString() {
-        return "Room{" +
-                "roomNumber='" + roomNumber + '\'' +
-                ", type='" + type + '\'' +
-                ", price=" + price +
-                ", available=" + available +
-                '}';
+        String status = isAvailable ? "DISPONIBLE" : "OCCUPÉE";
+        return String.format("| Num: %-4d | Type: %-8s | Prix: %-6.2f DH | Statut: %s |",
+                roomNumber, roomType, pricePerNight, status);
     }
 }
