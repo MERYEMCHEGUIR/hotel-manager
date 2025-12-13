@@ -2,7 +2,6 @@ package com.hotel.service;
 
 import com.hotel.model.*;
 import java.time.LocalDate;
-import java.time.temporal.ChronoUnit; // Import nécessaire pour calculer la durée
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -31,7 +30,7 @@ public class ReportGenerator {
         // Section 3: Statistiques financières
         generateFinancialStatistics(reservations);
 
-        // Section 4: Top clients (Utilise le nombre de réservations car les points de fidélité sont manquants)
+        // Section 4: Top clients
         generateTopCustomers(customers, reservations);
 
         // Section 5: Réservations à venir
@@ -64,27 +63,16 @@ public class ReportGenerator {
         System.out.println("\n🏨 STATISTIQUES DES CHAMBRES");
         System.out.println("─".repeat(60));
 
-        // CORRECTION 1: Utilisation de getRoomType() au lieu de getType()
         Map<Room.RoomType, Long> roomsByType = rooms.stream()
-                .collect(Collectors.groupingBy(Room::getRoomType, Collectors.counting()));
+                .collect(Collectors.groupingBy(Room::getType, Collectors.counting()));
 
         roomsByType.forEach((type, count) -> {
             long available = rooms.stream()
-                    .filter(r -> r.getRoomType() == type && r.isAvailable())
+                    .filter(r -> r.getType() == type && r.isAvailable())
                     .count();
-
-            // CORRECTION 2: Utilisation de type.name() au lieu de type.getDisplayName()
             System.out.printf("• %-10s : %d chambres (%d disponibles)\n",
-                    type.name(), count, available);
+                    type.getDisplayName(), count, available);
         });
-    }
-
-    /**
-     * Méthode d'aide pour calculer la durée d'une réservation (en jours).
-     */
-    private static long calculateDuration(Reservation reservation) {
-        // Calcule la différence en jours entre la date d'arrivée et la date de départ
-        return ChronoUnit.DAYS.between(reservation.getCheckInDate(), reservation.getCheckOutDate());
     }
 
     /**
@@ -101,9 +89,8 @@ public class ReportGenerator {
         double averageRevenue = reservations.isEmpty() ? 0 :
                 totalRevenue / reservations.size();
 
-        // CORRECTION 3: Utilisation de la méthode calculateDuration pour obtenir la durée
         long totalNights = reservations.stream()
-                .mapToLong(ReportGenerator::calculateDuration)
+                .mapToLong(Reservation::getDuration)
                 .sum();
 
         System.out.printf("• Chiffre d'affaires total : %.2f DH\n", totalRevenue);
@@ -112,28 +99,26 @@ public class ReportGenerator {
     }
 
     /**
-     * Top clients fidèles (classé par nombre de réservations, car getLoyaltyPoints est manquant)
+     * Top clients fidèles
      */
     private static void generateTopCustomers(List<Customer> customers,
                                              List<Reservation> reservations) {
         System.out.println("\n🌟 TOP 3 CLIENTS FIDÈLES");
         System.out.println("─".repeat(60));
 
-        Map<Customer, Long> reservationCount = reservations.stream()
-                .collect(Collectors.groupingBy(Reservation::getCustomer, Collectors.counting()));
-
-        // Trie par nombre de réservations (le plus élevé d'abord)
-        reservationCount.entrySet().stream()
-                .sorted(Map.Entry.<Customer, Long>comparingByValue().reversed())
+        customers.stream()
+                .sorted((c1, c2) -> Integer.compare(c2.getLoyaltyPoints(), c1.getLoyaltyPoints()))
                 .limit(3)
-                .forEach(entry -> {
-                    Customer customer = entry.getKey();
-                    long count = entry.getValue();
+                .forEach(customer -> {
+                    long reservationCount = reservations.stream()
+                            .filter(r -> r.getCustomer().equals(customer))
+                            .count();
 
-                    // CORRECTION 4: Utilisation de getFullName() au lieu des méthodes getFirstName/getLastName manquantes
-                    String fullName = customer.getFullName();
+                    // CORRECTION DE L'ERREUR getName()
+                    String fullName = customer.getFirstName() + " " + customer.getLastName();
 
-                    System.out.printf("• %s (%d réservations)\n", fullName, count);
+                    System.out.printf("• %s - %d points (%d réservations)\n",
+                            fullName, customer.getLoyaltyPoints(), reservationCount);
                 });
     }
 
@@ -158,11 +143,12 @@ public class ReportGenerator {
             System.out.println("• Aucune arrivée prévue dans les 7 prochains jours");
         } else {
             upcoming.forEach(r ->
-                    // CORRECTION 5: Utilisation de getFullName() au lieu des méthodes getFirstName/getLastName manquantes
-                    System.out.printf("• %s - Chambre %d - Client: %s\n",
+                    // CORRECTION DE L'ERREUR getName()
+                    System.out.printf("• %s - Chambre %d - Client: %s %s\n",
                             r.getCheckInDate(),
                             r.getRoom().getRoomNumber(),
-                            r.getCustomer().getFullName()));
+                            r.getCustomer().getFirstName(), // Utilisation du prénom
+                            r.getCustomer().getLastName())); // Utilisation du nom de famille
         }
     }
 

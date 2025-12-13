@@ -1,67 +1,111 @@
 package com.hotel.model;
 
+import com.hotel.utils.IdGenerator;
+import com.hotel.utils.DateUtils;
 import java.time.LocalDate;
-import java.time.temporal.ChronoUnit;
 
 public class Reservation {
-    // =====================================
-    // ATTRIBUTS DE CLASSE (VARIABLES)
-    // =====================================
-    private static int NEXT_ID = 5000;
 
-    private String reservationId; // <-- Manquait dans votre extrait
-    private Customer customer;   // <-- Manquait dans votre extrait
-    private Room room;           // <-- Manquait dans votre extrait
+    private String reservationId;
+    private Customer customer;
+    private Room room;
     private LocalDate checkInDate;
     private LocalDate checkOutDate;
-    private double totalPrice;   // <-- Manquait dans votre extrait
+    private double totalPrice;
 
-    // =====================================
-    // CONSTRUCTEUR
-    // =====================================
+    // Constructeur (inchangé)
     public Reservation(Customer customer, Room room, LocalDate checkInDate, LocalDate checkOutDate) {
-        this.reservationId = "RES" + (NEXT_ID++);
+        this.reservationId = IdGenerator.generateReservationId();
         this.customer = customer;
         this.room = room;
-        this.checkInDate = checkInDate;
-        this.checkOutDate = checkOutDate;
+        setCheckInDate(checkInDate);
+        setCheckOutDate(checkOutDate);
         this.totalPrice = calculateTotalPrice();
     }
 
-    // =====================================
-    // LOGIQUE INTERNE
-    // =====================================
-    private double calculateTotalPrice() {
-        // Calcule le nombre de jours entre les deux dates
-        long days = ChronoUnit.DAYS.between(checkInDate, checkOutDate);
-
-        // Sécurité pour éviter un prix négatif si les dates sont inversées
-        if (days <= 0) {
-            // Considérer au moins une nuit si check-in et check-out sont le même jour
-            days = 1;
-        }
-
-        return days * room.getPricePerNight();
+    // Getters et Setters (inchangés)
+    public String getReservationId() {
+        return reservationId;
     }
 
-    // =====================================
-    // GETTERS
-    // =====================================
-    public String getReservationId() { return reservationId; }
-    public Customer getCustomer() { return customer; }
-    public Room getRoom() { return room; }
-    public LocalDate getCheckInDate() { return checkInDate; }
-    public LocalDate getCheckOutDate() { return checkOutDate; } // Le getter correct
-    public double getTotalPrice() { return totalPrice; }
+    public Customer getCustomer() {
+        return customer;
+    }
+
+    public Room getRoom() {
+        return room;
+    }
+
+    public LocalDate getCheckInDate() {
+        return checkInDate;
+    }
+
+    public void setCheckInDate(LocalDate checkInDate) {
+        if (checkInDate == null) {
+            throw new IllegalArgumentException("La date d'arrivée ne peut pas être nulle");
+        }
+        if (DateUtils.isPast(checkInDate)) {
+            throw new IllegalArgumentException("La date d'arrivée ne peut pas être dans le passé");
+        }
+        this.checkInDate = checkInDate;
+    }
+
+    public LocalDate getCheckOutDate() {
+        return checkOutDate;
+    }
+
+    public void setCheckOutDate(LocalDate checkOutDate) {
+        if (checkOutDate == null) {
+            throw new IllegalArgumentException("La date de départ ne peut pas être nulle");
+        }
+        if (!DateUtils.isBefore(checkInDate, checkOutDate)) {
+            throw new IllegalArgumentException("La date de départ doit être après la date d'arrivée");
+        }
+        this.checkOutDate = checkOutDate;
+    }
+
+    public double getTotalPrice() {
+        return totalPrice;
+    }
+
+    /**
+     * Calculer le prix total du séjour
+     */
+    public double calculateTotalPrice() {
+        long duration = getDuration();
+        return room.getPrice() * duration;
+    }
+
+    /**
+     * Obtenir la durée du séjour en jours
+     */
+    public long getDuration() {
+        return DateUtils.daysBetween(checkInDate, checkOutDate);
+    }
+
+    /**
+     * Vérifier si cette réservation chevauche une autre
+     */
+    public boolean isOverlapping(Reservation other) {
+        if (other == null || !this.room.equals(other.room)) {
+            return false;
+        }
+
+        return !(this.checkOutDate.isBefore(other.checkInDate) ||
+                this.checkInDate.isAfter(other.checkOutDate));
+    }
 
     @Override
     public String toString() {
-        return String.format("| RES ID: %s | Client: %s | Chambre: %d | Arrivée: %s | Départ: %s | Prix: %.2f DH |",
+        // CORRECTION DE L'ERREUR getName()
+        String customerFullName = customer.getFirstName() + " " + customer.getLastName();
+
+        return String.format("Réservation %s | Client: %s | Chambre: %d | " +
+                        "Du %s au %s | Durée: %d jours | Total: %.2f DH",
                 reservationId,
-                customer.getFullName(),
+                customerFullName, // Utilisation du nom complet corrigé
                 room.getRoomNumber(),
-                checkInDate,
-                checkOutDate,
-                totalPrice);
+                DateUtils.formatDate(checkInDate), DateUtils.formatDate(checkOutDate),
+                getDuration(), totalPrice);
     }
 }
